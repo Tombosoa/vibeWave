@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
-
-interface AudioPlayerProps {
-  title: string;
-  artist?: string;
-  source: string;
-}
+import { AudioPlayerProps } from "@/utils";
+import { audioPlayerStyles } from "@/styles/style";
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, source }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -43,22 +39,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, source }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {artist && <Text style={styles.artist}>{artist}</Text>}
+    <View style={audioPlayerStyles.container}>
+      <Text style={audioPlayerStyles.title}>{title}</Text>
+      {artist && <Text numberOfLines={1} ellipsizeMode="tail" style={audioPlayerStyles.artist}>{artist}</Text>}
 
-      <TouchableOpacity onPress={togglePlayPause} style={styles.playPause}>
+      <TouchableOpacity onPress={togglePlayPause} style={audioPlayerStyles.playPause}>
         <Ionicons name={isPlaying ? "pause-circle" : "play-circle"} size={70} color="#1E90FF" />
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A1F44" },
-  title: { fontSize: 24, fontWeight: "bold", color: "#FFFFFF", textAlign: "center" },
-  artist: { fontSize: 18, color: "#87CEFA", textAlign: "center", marginBottom: 20 },
-  playPause: { marginTop: 20 },
-});
 
 export default AudioPlayer;

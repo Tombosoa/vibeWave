@@ -5,28 +5,26 @@ import {
   Text, 
   SafeAreaView, 
   ActivityIndicator, 
-  StyleSheet,
-  Dimensions,
   RefreshControl
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import Animated, { 
-  FadeInUp, 
-  FadeOutDown,
-  Layout
-} from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutDown, Layout } from 'react-native-reanimated';
+import { Audio } from "expo-av";
 import AudioItem from "../components/AudioItem";
 import { RootStackParamList } from "../app/index";
-
-const { width } = Dimensions.get('window');
+import { audioListStyles } from "@/styles/style";
 
 const AudioListScreen: React.FC = () => {
   const [audioFiles, setAudioFiles] = useState<MediaLibrary.Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState<MediaLibrary.Asset | null>(null);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const loadAudioFiles = async () => {
@@ -51,31 +49,77 @@ const AudioListScreen: React.FC = () => {
     setRefreshing(false);
   };
 
+  const handlePlayPauseAudio = async (audio: MediaLibrary.Asset) => {
+    try {
+      if (currentAudio?.id === audio.id && sound) {
+        const status = await sound.getStatusAsync();
+        if (status.isLoaded) {
+          if (status.isPlaying) {
+            await sound.pauseAsync();
+            setIsPlaying(false);
+          } else {
+            await sound.playAsync();
+            setIsPlaying(true);
+          }
+          return;
+        }
+      }
+
+      // Si un autre son joue, l'arrêter et le décharger
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      }
+
+      // Charger et jouer le nouveau son
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: audio.uri },
+        { shouldPlay: true }
+      );
+
+      setSound(newSound);
+      setCurrentAudio(audio);
+      setIsPlaying(true);
+    } catch (error) {
+      console.error("Erreur lors de la lecture du fichier audio :", error);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
+
   const renderHeader = () => (
     <LinearGradient
       colors={['#1e3c72', '#2a5298']}
-      style={styles.headerGradient}
+      style={audioListStyles.headerGradient}
     >
-      <View style={styles.headerContent}>
+      <View style={audioListStyles.headerContent}>
         <MaterialIcons name="library-music" size={32} color="#fff" />
-        <Text style={styles.header}>Ma Bibliothèque</Text>
-        <Text style={styles.subHeader}>{audioFiles.length} morceaux</Text>
+        <Text style={audioListStyles.header}>Ma Bibliothèque</Text>
+        <Text style={audioListStyles.subHeader} numberOfLines={1} ellipsizeMode="tail">
+          {audioFiles.length} morceaux
+        </Text>
       </View>
     </LinearGradient>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={audioListStyles.container}>
       {renderHeader()}
 
       {loading ? (
-        <View style={styles.loaderContainer}>
+        <View style={audioListStyles.loaderContainer}>
           <ActivityIndicator size="large" color="#1e3c72" />
-          <Text style={styles.loadingText}>Chargement de votre bibliothèque...</Text>
+          <Text style={audioListStyles.loadingText}>Chargement de votre bibliothèque...</Text>
         </View>
       ) : (
         <Animated.View 
-          style={styles.contentContainer}
+          style={audioListStyles.contentContainer}
           entering={FadeInUp}
           exiting={FadeOutDown}
           layout={Layout.springify()}
@@ -92,11 +136,13 @@ const AudioListScreen: React.FC = () => {
                   <AudioItem
                     title={item.filename}
                     duration={item.duration}
-                    onPress={() => navigation.navigate("PlayerScreen", { audio: item })}
+                    onPressPlay={() => handlePlayPauseAudio(item)} 
+                    onPress={() => navigation.navigate("PlayerScreen", { audio: item })} 
+                    isPlaying={currentAudio?.id === item.id && isPlaying} 
                   />
                 </Animated.View>
               )}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={audioListStyles.listContent}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl
@@ -107,10 +153,10 @@ const AudioListScreen: React.FC = () => {
               }
             />
           ) : (
-            <View style={styles.emptyContainer}>
+            <View style={audioListStyles.emptyContainer}>
               <MaterialIcons name="music-off" size={64} color="#1e3c72" />
-              <Text style={styles.emptyMessage}>Aucun fichier audio trouvé</Text>
-              <Text style={styles.emptySubMessage}>
+              <Text style={audioListStyles.emptyMessage}>Aucun fichier audio trouvé</Text>
+              <Text style={audioListStyles.emptySubMessage}>
                 Ajoutez de la musique à votre appareil pour commencer
               </Text>
             </View>
@@ -120,78 +166,5 @@ const AudioListScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f6fa",
-  },
-  headerGradient: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginTop: 10,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 5,
-  },
-  contentContainer: {
-    flex: 1,
-    marginTop: 20,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#1e3c72",
-    textAlign: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyMessage: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1e3c72",
-    marginTop: 20,
-    textAlign: "center",
-  },
-  emptySubMessage: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 10,
-    textAlign: "center",
-    maxWidth: width * 0.8,
-  },
-});
 
 export default AudioListScreen;

@@ -1,8 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import AudioPlayer from "../components/AudioPlayer";
-
+import { playerScreenStyles } from "@/styles/style";
 type PlayerScreenRouteProp = RouteProp<{ Player: { audio: any } }, "Player">;
 
 const PlayerScreen: React.FC = () => {
@@ -10,7 +10,7 @@ const PlayerScreen: React.FC = () => {
   const { audio } = route.params;
 
   return (
-    <View style={styles.container}>
+    <View style={playerScreenStyles.container}>
       <AudioPlayer
         title={audio.filename || "Audio"}
         artist="Inconnu"
@@ -19,14 +19,5 @@ const PlayerScreen: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0A1F44",
-  },
-});
 
 export default PlayerScreen;

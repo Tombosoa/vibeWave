@@ -2,19 +2,14 @@ import React from 'react';
 import { 
   TouchableOpacity, 
   Text, 
-  StyleSheet, 
   View 
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { audioItemStyles } from '@/styles/style';
+import { AudioItemProps } from '@/utils';
 
-interface AudioItemProps {
-  title: string;
-  duration?: number;
-  onPress: () => void;
-}
-
-const AudioItem: React.FC<AudioItemProps> = ({ title, duration, onPress }) => {
+const AudioItem: React.FC<AudioItemProps> = ({ title, duration, onPress, onPressPlay, isPlaying }) => {
   const formatDuration = (seconds?: number) => {
     if (!seconds) return '--:--';
     const minutes = Math.floor(seconds / 60);
@@ -31,57 +26,20 @@ const AudioItem: React.FC<AudioItemProps> = ({ title, duration, onPress }) => {
 
   return (
     <Animated.View entering={FadeIn}>
-      <TouchableOpacity style={styles.container} onPress={onPress}>
-        <View style={styles.iconContainer}>
+      <TouchableOpacity style={audioItemStyles.container} onPress={onPress}>
+        <View style={audioItemStyles.iconContainer}>
           <MaterialIcons name="music-note" size={24} color="#1e3c72" />
         </View>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{formatTitle(title)}</Text>
-          <Text style={styles.duration}>{formatDuration(duration)}</Text>
+        <View style={audioItemStyles.textContainer}>
+          <Text style={audioItemStyles.title}>{formatTitle(title)}</Text>
+          <Text style={audioItemStyles.duration}>{formatDuration(duration)}</Text>
         </View>
-        <MaterialIcons name="play-circle-outline" size={28} color="#1e3c72" />
+        <TouchableOpacity onPress={onPressPlay}>
+          <Ionicons name={isPlaying ? "pause-circle" : "play-circle"} size={28} color="#1e3c72" />
+        </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    padding: 15,
-    borderRadius: 12,
-    marginVertical: 6,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 60, 114, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2d3436',
-    marginBottom: 4,
-  },
-  duration: {
-    fontSize: 14,
-    color: '#636e72',
-  },
-});
 
 export default AudioItem;
