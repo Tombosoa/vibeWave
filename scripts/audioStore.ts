@@ -13,11 +13,12 @@ interface AudioState {
   isPlaying: boolean;
   audioFiles: MediaLibrary.Asset[];
   playlists: Playlist[];
-
+  
   setAudioFiles: (files: MediaLibrary.Asset[]) => void;
   playPauseAudio: (audio: MediaLibrary.Asset) => Promise<void>;
   playNextAudio: () => void;
   playPreviousAudio: () => void;
+  stopAudio: () => Promise<void>;
 
   addPlaylist: (name: string) => void;
   removePlaylist: (name: string) => void;
@@ -45,6 +46,16 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         if (sound) {
           await sound.unloadAsync();
         }
+
+        // Active la lecture en arrière-plan
+         await Audio.setAudioModeAsync({
+                  allowsRecordingIOS: false,
+                  staysActiveInBackground: true,
+                  playsInSilentModeIOS: true,
+                  shouldDuckAndroid: true,
+                  interruptionModeIOS: 1, // Valeur numérique pour DUCK_OTHERS
+                  interruptionModeAndroid: 1, // Valeur numérique pour DUCK_OTHERS
+                });
 
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: audio.uri },
@@ -89,6 +100,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const currentIndex = audioFiles.findIndex((audio) => audio.id === currentAudio.id);
     const prevIndex = (currentIndex - 1 + audioFiles.length) % audioFiles.length;
     playPauseAudio(audioFiles[prevIndex]);
+  },
+
+  stopAudio: async () => {
+    const { sound } = get();
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      set({ sound: null, currentAudio: null, isPlaying: false });
+    }
   },
 
   addPlaylist: (name) => {
