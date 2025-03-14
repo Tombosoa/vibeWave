@@ -16,6 +16,7 @@ import { Audio } from "expo-av";
 import AudioItem from "../components/AudioItem";
 import { RootStackParamList } from "../app/index";
 import { audioListStyles } from "@/styles/style";
+import { fetchAudioFiles } from "@/scripts/audioService";
 
 const AudioListScreen: React.FC = () => {
   const [audioFiles, setAudioFiles] = useState<MediaLibrary.Asset[]>([]);
@@ -28,15 +29,15 @@ const AudioListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const loadAudioFiles = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status === "granted") {
-      const media = await MediaLibrary.getAssetsAsync({ 
-        mediaType: "audio",
-        sortBy: ['creationTime'],
-      });
-      setAudioFiles(media.assets);
+    try {
+      setLoading(true);
+      const files = await fetchAudioFiles();
+      setAudioFiles(files);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des fichiers audio :", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
