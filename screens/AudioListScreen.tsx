@@ -65,13 +65,11 @@ const AudioListScreen: React.FC = () => {
         }
       }
 
-      // Si un autre son joue, l'arrêter et le décharger
       if (sound) {
         await sound.stopAsync();
         await sound.unloadAsync();
       }
 
-      // Charger et jouer le nouveau son
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: audio.uri },
         { shouldPlay: true }

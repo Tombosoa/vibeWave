@@ -131,3 +131,35 @@ export const playerScreenStyles = StyleSheet.create({
     backgroundColor: "#0A1F44",
   },
 });
+
+export const customScreenStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gradientContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  text: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginTop: 20,
+    textAlign: "center",
+  },
+  comingSoon: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 10,
+    textAlign: "center",
+  },
+});
+
+
+export const headerLeftStyles = StyleSheet.create({
+  menuIcon: {
+    marginLeft: 15,
+  },
+});
