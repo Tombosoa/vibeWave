@@ -1,50 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
-import { AudioPlayerProps } from "@/utils";
+import * as MediaLibrary from "expo-media-library";
 import { audioPlayerStyles } from "@/styles/style";
+import { useAudioStore } from "../scripts/audioStore";
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, source }) => {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+interface AudioPlayerProps {
+  title: string;
+  artist: string;
+  audio: MediaLibrary.Asset;
+}
 
-  useEffect(() => {
-    const loadAudio = async () => {
-      try {
-        const { sound } = await Audio.Sound.createAsync({ uri: source });
-        setSound(sound);
-      } catch (error) {
-        console.error("Erreur de chargement de l'audio :", error);
-      }
-    };
-
-    loadAudio();
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [source]);
-
-  const togglePlayPause = async () => {
-    if (!sound) return;
-    if (isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.playAsync();
-    }
-    setIsPlaying(!isPlaying);
-  };
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
+  const { currentAudio, isPlaying, playPauseAudio } = useAudioStore();
 
   return (
     <View style={audioPlayerStyles.container}>
       <Text style={audioPlayerStyles.title}>{title}</Text>
-      {artist && <Text numberOfLines={1} ellipsizeMode="tail" style={audioPlayerStyles.artist}>{artist}</Text>}
+      {artist && (
+        <Text numberOfLines={1} ellipsizeMode="tail" style={audioPlayerStyles.artist}>
+          {artist}
+        </Text>
+      )}
 
-      <TouchableOpacity onPress={togglePlayPause} style={audioPlayerStyles.playPause}>
-        <Ionicons name={isPlaying ? "pause-circle" : "play-circle"} size={70} color="#1E90FF" />
+      <TouchableOpacity 
+        onPress={() => playPauseAudio(audio)} 
+        style={audioPlayerStyles.playPause}
+        disabled={!audio?.uri}
+      >
+        <Ionicons
+          name={currentAudio?.id === audio.id && isPlaying ? "pause-circle" : "play-circle"}
+          size={70}
+          color="#1E90FF"
+        />
       </TouchableOpacity>
     </View>
   );

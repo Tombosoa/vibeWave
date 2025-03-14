@@ -14,7 +14,7 @@ export const fetchAudioFiles = async (): Promise<MediaLibrary.Asset[]> => {
   while (hasNextPage) {
     const media = await MediaLibrary.getAssetsAsync({
       mediaType: MediaLibrary.MediaType.audio,
-      first: 100, 
+      first: 1, 
       after: after || undefined, 
     });
 

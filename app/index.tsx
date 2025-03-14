@@ -10,10 +10,14 @@ import AlbumsScreen from "@/screens/AlbumScreen";
 import ArtistsScreen from "@/screens/ArtistScreen";
 import PlaylistsScreen from "@/screens/PlaylistsScreen";
 import { headerLeftStyles } from "@/styles/style";
+import { Asset } from "expo-media-library";
+import PlaylistDetailScreen from "@/screens/PlaylistDetailsScreen";
 
 export type RootStackParamList = {
   AudioList: undefined;
-  PlayerScreen: { audio: any };
+  PlayerScreen: { audio: Asset };
+  Playlists: undefined;
+  PlaylistDetail: { playlistName: string };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -46,6 +50,35 @@ function MainStack() {
           title: "Lecteur",
           headerTransparent: true,
         }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function PlaylistsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#1e3c72',
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen 
+        name="Playlists" 
+        component={PlaylistsScreen} 
+        options={{ title: "Playlists" }}
+      />
+      <Stack.Screen
+        name="PlaylistDetail"
+        component={PlaylistDetailScreen}
+        options={{ title: "Détails de la Playlist" }}
       />
     </Stack.Navigator>
   );
@@ -131,8 +164,8 @@ function App() {
         }}
       />
       <Drawer.Screen 
-        name="Playlists" 
-        component={PlaylistsScreen}
+        name="Playlist" 
+        component={PlaylistsStack}
         options={{
           drawerIcon: ({ color }) => (
             <MaterialIcons name="queue-music" size={24} color={color} />

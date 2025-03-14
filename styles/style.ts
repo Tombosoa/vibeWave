@@ -51,75 +51,45 @@ const { width } = Dimensions.get('window');
 export const audioListStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f6fa",
-  },
-  headerGradient: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 10,
   },
   header: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#FFFFFF",
-    marginTop: 10,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 5,
-    width: "100%",
+    color: "#1e3c72",
     textAlign: "center",
-  },
-  contentContainer: {
-    flex: 1,
-    marginTop: 20,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    marginVertical: 10,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#1e3c72",
-    textAlign: "center",
+    color: "#555",
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+  listContent: {
+    paddingBottom: 80, // Espace pour la barre de contrôle
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
-    padding: 20,
+    backgroundColor: "#1e3c72",
+    paddingVertical: 10,
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
   },
-  emptyMessage: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1e3c72",
-    marginTop: 20,
-    textAlign: "center",
-  },
-  emptySubMessage: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 10,
-    textAlign: "center",
-    maxWidth: width * 0.8,
+  controlButton: {
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: "#2a5298",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

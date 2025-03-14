@@ -1,9 +1,11 @@
 import React from "react";
 import { View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
+import * as MediaLibrary from "expo-media-library";
 import AudioPlayer from "../components/AudioPlayer";
 import { playerScreenStyles } from "@/styles/style";
-type PlayerScreenRouteProp = RouteProp<{ Player: { audio: any } }, "Player">;
+
+type PlayerScreenRouteProp = RouteProp<{ Player: { audio: MediaLibrary.Asset } }, "Player">;
 
 const PlayerScreen: React.FC = () => {
   const route = useRoute<PlayerScreenRouteProp>();
@@ -11,10 +13,10 @@ const PlayerScreen: React.FC = () => {
 
   return (
     <View style={playerScreenStyles.container}>
-      <AudioPlayer
-        title={audio.filename || "Audio"}
-        artist="Inconnu"
-        source={audio.uri}
+      <AudioPlayer 
+        title={audio.filename || "Audio"} 
+        artist="Inconnu" 
+        audio={audio} 
       />
     </View>
   );
