@@ -1,60 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
   FlatList,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
-  Animated,
-  Easing,
 } from "react-native";
+import Modal from "react-native-modal";
 import { useNavigation } from "@react-navigation/native";
-import { useAudioStore } from "../scripts/audioStore";
+import { useAudioStore } from "@/store/audioStore";
 import { MaterialIcons, Feather } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../app"; 
+import { RootStackParamList } from "../app";
 
-type PlaylistsScreenNavigationProp = StackNavigationProp<RootStackParamList, "Playlists">;
+type PlaylistsScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "Playlists"
+>;
 
 const PlaylistsScreen = () => {
-  const { playlists, addPlaylist, removePlaylist, renamePlaylist } = useAudioStore();
+  const { playlists, addPlaylist, removePlaylist, renamePlaylist, playPauseAudio } =
+    useAudioStore();
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  const fadeAnim = useState(new Animated.Value(0))[0];
 
   const navigation = useNavigation<PlaylistsScreenNavigationProp>();
+
+  useEffect(() => {
+    if (playlists.length === 0) {
+      addPlaylist("Default Playlist");
+    }
+  }, [playlists]);
 
   const showPlaylistOptions = (playlistName: string) => {
     setSelectedPlaylist(playlistName);
     setModalVisible(true);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      easing: Easing.ease,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeModal = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      easing: Easing.ease,
-      useNativeDriver: true,
-    }).start(() => setModalVisible(false));
   };
 
   const handleRename = () => {
     if (selectedPlaylist && newName.trim()) {
       renamePlaylist(selectedPlaylist, newName.trim());
-      closeModal();
+      closePopup();
       setNewName("");
     }
   };
+
+  const closePopup = () => setModalVisible(false);
 
   return (
     <View style={styles.container}>
@@ -85,52 +79,73 @@ const PlaylistsScreen = () => {
         renderItem={({ item: playlist }) => (
           <TouchableOpacity
             style={styles.playlistItem}
-            onPress={() => navigation.navigate("PlaylistDetail", { playlistName: playlist.name })}
+            onPress={() =>
+              navigation.navigate("PlaylistDetail", {
+                playlistName: playlist.name,
+              })
+            }
           >
             <Text style={styles.playlistName}>
               {playlist.name} ({playlist.tracks.length} morceaux)
             </Text>
-            <TouchableOpacity onPress={() => showPlaylistOptions(playlist.name)}>
+            <TouchableOpacity
+              onPress={() => showPlaylistOptions(playlist.name)}
+            >
               <MaterialIcons name="more-vert" size={24} color="#555" />
             </TouchableOpacity>
           </TouchableOpacity>
         )}
       />
 
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Options de Playlist</Text>
+<Modal
+  isVisible={modalVisible}
+  onBackdropPress={closePopup}
+  style={styles.modal}
+>
+  <View style={styles.modalContent}>
+    <Text style={styles.modalTitle}>Options de Playlist</Text>
 
-            <TextInput
-              placeholder="Nouveau nom"
-              placeholderTextColor="#888"
-              value={newName}
-              onChangeText={setNewName}
-              style={styles.modalInput}
-            />
-            <TouchableOpacity style={styles.modalButton} onPress={handleRename}>
-              <Text style={styles.modalButtonText}>Renommer</Text>
-            </TouchableOpacity>
+    <TextInput
+      placeholder="Nouveau nom"
+      placeholderTextColor="#888"
+      value={newName}
+      onChangeText={setNewName}
+      style={styles.modalInput}
+    />
+    <TouchableOpacity style={styles.modalButton} onPress={handleRename}>
+      <Text style={styles.modalButtonText}>Renommer</Text>
+    </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.modalButton, styles.deleteButton]}
-              onPress={() => {
-                if (selectedPlaylist) {
-                  removePlaylist(selectedPlaylist);
-                  closeModal();
-                }
-              }}
-            >
-              <Text style={styles.modalButtonText}>Supprimer</Text>
-            </TouchableOpacity>
+    <TouchableOpacity
+      style={[styles.modalButton, styles.playButton]}
+      onPress={() => {
+        if (selectedPlaylist) {
+          const playlist = playlists.find((p) => p.name === selectedPlaylist);
+          if (playlist && playlist.tracks.length > 0) {
+            /**this play only the first song on the playlist -> update that */
+            playPauseAudio(playlist.tracks[0]); 
+            console.log(playlist)
+            closePopup();
+          }
+        }
+      }}
+    >
+      <Text style={styles.modalButtonText}>Lire la playlist</Text>
+    </TouchableOpacity>
 
-            <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
-              <Text style={styles.modalButtonText}>Annuler</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </Modal>
+    <TouchableOpacity
+      style={[styles.modalButton, styles.deleteButton]}
+      onPress={() => {
+        if (selectedPlaylist) {
+          removePlaylist(selectedPlaylist);
+          closePopup();
+        }
+      }}
+    >
+      <Text style={styles.modalButtonText}>Supprimer</Text>
+    </TouchableOpacity>
+  </View>
+</Modal>
     </View>
   );
 };
@@ -141,6 +156,7 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f5f5f5",
   },
+  playButton: {},
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -172,27 +188,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   playlistName: {
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
   },
   modalContent: {
     backgroundColor: "#fff",
     padding: 20,
-    borderRadius: 10,
-    width: "80%",
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    width: "100%",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
@@ -204,9 +216,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#ccc",
     paddingVertical: 10,
-    paddingHorizontal: 15,
     fontSize: 16,
     color: "#333",
+    width: "100%",
     marginBottom: 15,
   },
   modalButton: {
@@ -215,6 +227,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     marginBottom: 10,
+    width: "100%",
   },
   deleteButton: {
     backgroundColor: "#ff4444",

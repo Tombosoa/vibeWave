@@ -2,9 +2,11 @@ import * as MediaLibrary from "expo-media-library";
 
 export const fetchAudioFiles = async (): Promise<MediaLibrary.Asset[]> => {
   const { status } = await MediaLibrary.requestPermissionsAsync();
-  
+
   if (status !== "granted") {
-    throw new Error("Permission non accordée pour accéder à la bibliothèque musicale.");
+    throw new Error(
+      "Permission non accordée pour accéder à la bibliothèque musicale.",
+    );
   }
 
   let allAudioFiles: MediaLibrary.Asset[] = [];
@@ -14,8 +16,8 @@ export const fetchAudioFiles = async (): Promise<MediaLibrary.Asset[]> => {
   while (hasNextPage) {
     const media = await MediaLibrary.getAssetsAsync({
       mediaType: MediaLibrary.MediaType.audio,
-      first: 1, 
-      after: after || undefined, 
+      first: 1,
+      after: after || undefined,
     });
 
     allAudioFiles = [...allAudioFiles, ...media.assets];

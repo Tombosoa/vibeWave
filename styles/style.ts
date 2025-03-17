@@ -1,22 +1,38 @@
 import { Dimensions, StyleSheet } from "react-native";
 
 export const audioPlayerStyles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A1F44" },
-  title: { fontSize: 24, fontWeight: "bold", color: "#FFFFFF", textAlign: "center" },
-  artist: { fontSize: 18, color: "#87CEFA", textAlign: "center", marginBottom: 20, width: "100%" },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0A1F44",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  artist: {
+    fontSize: 18,
+    color: "#87CEFA",
+    textAlign: "center",
+    marginBottom: 20,
+    width: "100%",
+  },
   playPause: { marginTop: 20 },
 });
 
 export const audioItemStyles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
     padding: 15,
     borderRadius: 12,
     marginVertical: 6,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -25,9 +41,9 @@ export const audioItemStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(30, 60, 114, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(30, 60, 114, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   textContainer: {
@@ -36,17 +52,17 @@ export const audioItemStyles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2d3436',
+    fontWeight: "600",
+    color: "#2d3436",
     marginBottom: 4,
   },
   duration: {
     fontSize: 14,
-    color: '#636e72',
+    color: "#636e72",
   },
 });
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export const audioListStyles = StyleSheet.create({
   container: {
@@ -72,7 +88,7 @@ export const audioListStyles = StyleSheet.create({
     color: "#555",
   },
   listContent: {
-    paddingBottom: 80, // Espace pour la barre de contrôle
+    paddingBottom: 80, 
   },
   footerContainer: {
     flexDirection: "row",
@@ -99,6 +115,7 @@ export const playerScreenStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#0A1F44",
+    zIndex: 0
   },
 });
 
@@ -126,7 +143,6 @@ export const customScreenStyles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
 
 export const headerLeftStyles = StyleSheet.create({
   menuIcon: {

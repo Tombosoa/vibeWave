@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useAudioStore } from "../scripts/audioStore";
+import { useAudioStore } from "@/store/audioStore";
 import { fetchAudioFiles } from "../scripts/audioService";
 import AudioItem from "../components/AudioItem";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/app";
+import Player from "@/components/Player";
 
 const { width } = Dimensions.get('window');
 
@@ -60,6 +61,14 @@ const AudioListScreen = () => {
     }
   };
 
+  const renderFooter = () =>{
+    if(!currentAudio) return null;
+
+    return <Player current={currentAudio} onPress={function (): void {
+      throw new Error("Function not implemented.");
+    } } audio={currentAudio}/>
+  }
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadAudioFiles();
@@ -81,42 +90,6 @@ const AudioListScreen = () => {
       </Animated.View>
     </LinearGradient>
   );
-
-  const renderFooter = () => {
-    if (!currentAudio) return null; 
-
-    return (
-      <Animated.View entering={FadeInUp} style={styles.footerContainer}>
-        <LinearGradient colors={['#1e3c72', '#2a5298']} style={styles.footerGradient}>
-          {/* Affichage du titre de la chanson en cours */}
-          <Text numberOfLines={1} style={styles.currentAudioTitle}>
-            {currentAudio.filename}
-          </Text>
-
-          <View style={styles.controls}>
-            <TouchableOpacity onPress={playPreviousAudio} style={styles.controlButton}>
-              <MaterialIcons name="skip-previous" size={32} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={() => playPauseAudio(currentAudio)} 
-              style={styles.playButton}
-            >
-              <MaterialIcons 
-                name={isPlaying ? "pause-circle-filled" : "play-circle-filled"} 
-                size={48} 
-                color="#fff" 
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={playNextAudio} style={styles.controlButton}>
-              <MaterialIcons name="skip-next" size={32} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </Animated.View>
-    );
-  };
 
   const renderEmptyList = () => (
     <Animated.View 
