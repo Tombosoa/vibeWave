@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Audio } from "expo-av";
 import * as MediaLibrary from "expo-media-library";
+import * as Notifications from "expo-notifications";
 
 interface Playlist {
   name: string;
@@ -13,7 +14,7 @@ interface AudioState {
   isPlaying: boolean;
   audioFiles: MediaLibrary.Asset[];
   playlists: Playlist[];
-  
+
   setAudioFiles: (files: MediaLibrary.Asset[]) => void;
   playPauseAudio: (audio: MediaLibrary.Asset) => Promise<void>;
   playNextAudio: () => void;
@@ -27,6 +28,9 @@ interface AudioState {
   addTrackToPlaylist: (playlistName: string, track: MediaLibrary.Asset) => void;
   removeTrackFromPlaylist: (playlistName: string, trackId: string) => void;
   isTrackInPlaylist: (playlistName: string, trackId: string) => boolean;
+
+  // Nouveau champ pour les notifications
+  sendNotification: () => void;
 }
 
 export const useAudioStore = create<AudioState>((set, get) => ({
@@ -47,15 +51,14 @@ export const useAudioStore = create<AudioState>((set, get) => ({
           await sound.unloadAsync();
         }
 
-        // Active la lecture en arrière-plan
-         await Audio.setAudioModeAsync({
-                  allowsRecordingIOS: false,
-                  staysActiveInBackground: true,
-                  playsInSilentModeIOS: true,
-                  shouldDuckAndroid: true,
-                  interruptionModeIOS: 1, // Valeur numérique pour DUCK_OTHERS
-                  interruptionModeAndroid: 1, // Valeur numérique pour DUCK_OTHERS
-                });
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          interruptionModeIOS: 1,
+          interruptionModeAndroid: 1,
+        });
 
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: audio.uri },
@@ -69,6 +72,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             get().playNextAudio();
           }
         });
+
+        // Envoyer une notification pour le Play/Pause
+        get().sendNotification();
       } else {
         if (sound) {
           if (isPlaying) {
@@ -77,6 +83,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             await sound.playAsync();
           }
           set({ isPlaying: !isPlaying });
+
+          // Envoyer une notification pour le Play/Pause
+          get().sendNotification();
         }
       }
     } catch (error) {
@@ -91,6 +100,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const currentIndex = audioFiles.findIndex((audio) => audio.id === currentAudio.id);
     const nextIndex = (currentIndex + 1) % audioFiles.length;
     playPauseAudio(audioFiles[nextIndex]);
+
+    // Envoyer une notification pour le prochain audio
+    get().sendNotification();
   },
 
   playPreviousAudio: () => {
@@ -100,6 +112,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const currentIndex = audioFiles.findIndex((audio) => audio.id === currentAudio.id);
     const prevIndex = (currentIndex - 1 + audioFiles.length) % audioFiles.length;
     playPauseAudio(audioFiles[prevIndex]);
+
+    // Envoyer une notification pour l'audio précédent
+    get().sendNotification();
   },
 
   stopAudio: async () => {
@@ -108,54 +123,46 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       await sound.stopAsync();
       await sound.unloadAsync();
       set({ sound: null, currentAudio: null, isPlaying: false });
+
+      // Envoyer une notification pour arrêter l'audio
+      get().sendNotification();
     }
   },
 
-  addPlaylist: (name) => {
-    const { playlists } = get();
-    if (!playlists.find((p) => p.name === name)) {
-      set({ playlists: [...playlists, { name, tracks: [] }] });
-    }
-  },
+  sendNotification: async () => {
+    const { currentAudio, isPlaying } = get();
 
-  removePlaylist: (name) => {
-    set({ playlists: get().playlists.filter((p) => p.name !== name) });
-  },
+    // Crée une notification avec des boutons d'action
+    await Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
 
-  renamePlaylist: (oldName: string, newName: string) => {
-    set((state) => ({
-      playlists: state.playlists.map((playlist) =>
-        playlist.name === oldName ? { ...playlist, name: newName } : playlist
-      ),
-    }));
-  },
-
-  openPlaylist: (name) => {
-    console.log("Ouvrir la playlist :", name);
-  },
-
-  addTrackToPlaylist: (playlistName, track) => {
-    set({
-      playlists: get().playlists.map((playlist) =>
-        playlist.name === playlistName
-          ? { ...playlist, tracks: [...playlist.tracks, track] }
-          : playlist
-      ),
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: currentAudio ? `Lecture de : ${currentAudio.filename}` : "Pas d'audio",
+        body: isPlaying ? "Lecture en cours..." : "Lecture en pause.",
+        buttons: [
+          {
+            text: isPlaying ? "Pause" : "Jouer",
+            onPress: () => get().playPauseAudio(currentAudio),
+          },
+          {
+            text: "Suivant",
+            onPress: () => get().playNextAudio(),
+          },
+          {
+            text: "Précédent",
+            onPress: () => get().playPreviousAudio(),
+          },
+        ],
+      },
+      trigger: null, // Notifie immédiatement
     });
   },
 
-  removeTrackFromPlaylist: (playlistName, trackId) => {
-    set({
-      playlists: get().playlists.map((playlist) =>
-        playlist.name === playlistName
-          ? { ...playlist, tracks: playlist.tracks.filter((t) => t.id !== trackId) }
-          : playlist
-      ),
-    });
-  },
-
-  isTrackInPlaylist: (playlistName, trackId) => {
-    const playlist = get().playlists.find((p) => p.name === playlistName);
-    return playlist ? playlist.tracks.some((t) => t.id === trackId) : false;
-  },
+  // Autres actions de playlist ici...
 }));

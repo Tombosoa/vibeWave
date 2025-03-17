@@ -2,9 +2,10 @@ import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as MediaLibrary from "expo-media-library";
+import * as Notifications from "expo-notifications";
 import { audioPlayerStyles } from "@/styles/style";
 import { useAudioStore } from "../scripts/audioStore";
-import { Audio } from "expo-av"; // Importation de Audio pour gérer l'audio en arrière-plan
+import { Audio } from "expo-av";
 
 interface AudioPlayerProps {
   title: string;
@@ -13,7 +14,7 @@ interface AudioPlayerProps {
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
-  const { currentAudio, isPlaying, playPauseAudio } = useAudioStore();
+  const { currentAudio, isPlaying, playPauseAudio, playNextAudio, playPreviousAudio, stopAudio } = useAudioStore();
 
   useEffect(() => {
     // Assurer que l'audio continue en arrière-plan
@@ -23,17 +24,58 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
         staysActiveInBackground: true,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
-        interruptionModeIOS: 1, // Valeur numérique pour DUCK_OTHERS
-        interruptionModeAndroid: 1, // Valeur numérique pour DUCK_OTHERS
+        interruptionModeIOS: 1,
+        interruptionModeAndroid: 1,
       });
     };
 
     setAudioBackgroundMode();
 
     return () => {
-      // Optionnel: tu peux aussi gérer la suppression de l'audio si nécessaire
+      // Libération des ressources audio lorsque le composant est démonté
+      if (currentAudio) {
+        stopAudio();
+      }
     };
-  }, []);
+  }, [currentAudio, stopAudio]); // Dépendances pour arrêter l'audio quand currentAudio change
+
+  // Fonction pour envoyer une notification avec des actions
+  const sendNotification = async () => {
+    await Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: currentAudio ? `Lecture de : ${currentAudio.filename}` : "Pas d'audio",
+        body: isPlaying ? "Lecture en cours..." : "Lecture en pause.",
+        buttons: [
+          {
+            text: isPlaying ? "Pause" : "Jouer",
+            onPress: () => playPauseAudio(audio),
+          },
+          {
+            text: "Suivant",
+            onPress: playNextAudio,
+          },
+          {
+            text: "Précédent",
+            onPress: playPreviousAudio,
+          },
+        ],
+      },
+      trigger: null, // Notifie immédiatement
+    });
+  };
+
+  useEffect(() => {
+    // Envoyer une notification chaque fois que l'audio change
+    sendNotification();
+  }, [currentAudio, isPlaying]);
 
   return (
     <View style={audioPlayerStyles.container}>
