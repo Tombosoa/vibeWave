@@ -22,7 +22,8 @@ import Slider from "@react-native-community/slider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 //import MusicInfo from "expo-music-info";
 import TrackPlayer from "react-native-track-player"
-import * as da from "react-native-music-metadata";
+import * as Metadata from "react-native-music-metadata";
+
 interface PlayerProps {
   current: MediaLibrary.Asset;
   onPress: () => void;
@@ -32,7 +33,6 @@ const { width, height } = Dimensions.get("window");
 const Player: React.FC<PlayerProps> = ({ current, onPress, audio }) => {
   const insets = useSafeAreaInsets();
   const {
-    currentAudio,
     isPlaying,
     playPauseAudio,
     playNextAudio,
@@ -91,38 +91,42 @@ const Player: React.FC<PlayerProps> = ({ current, onPress, audio }) => {
   });
 //console.log(current.uri)
 /*
-async function getMetadata(uri: any): Promise<any> {
+const [metadata, setMetadata] = useState({
+  title: "Inconnu",
+  artist: "Inconnu",
+  album: "Inconnu",
+  genre: "Inconnu",
+  picture: null,
+});
+ async function fetchMetadata(uri: string) {
   try {
-    if (!current?.uri) {
-      throw new Error("L'URI du fichier audio est invalide.");
-    }
+    let data;
+    
+    if ((MusicInfo as any).getMusicInfoAsync) {
+      data = await (MusicInfo as any).getMusicInfoAsync(uri, {
+        title: true,
+        artist: true,
+        album: true,
+        genre: true,
+        picture: true,
+      });
+    } 
 
-    const metaData = await (MusicInfo as any).getMusicInfoAsync(uri, {
-      title: true,
-      artist: true,
-      album: true,
-      genre: true,
-      picture: true,
-    });
-
-    return metaData;
+    setMetadata(data);
   } catch (error) {
     console.error("Erreur lors de la récupération des métadonnées :", error);
-    return null;
   }
 }
 
 useEffect(() => {
-  async function fetchMetadata() {
-    const metadata = await getMetadata(currentAudio?.uri);
-    console.log("Méta-données récupérées :", metadata);
+  if (current?.uri) {
+    fetchMetadata(current.uri);
+    //console.log(metadata)
   }
+}, [current]);*/
 
-  fetchMetadata();
-}, [current]);
-
-*/
   //console.log(getMetadata())
+  console.log(current.uri)
 
   const onGestureEvent = (event: { translationY: number; }) => {
     translateY.value = event.translationY;

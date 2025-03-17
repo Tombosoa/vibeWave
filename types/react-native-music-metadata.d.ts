@@ -8,4 +8,6 @@ declare module 'react-native-music-metadata' {
     }
   
     export function getMetadata(uri: string): Promise<Metadata>;
+
+
   }
