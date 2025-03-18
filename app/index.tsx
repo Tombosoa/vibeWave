@@ -1,7 +1,7 @@
 import AudioListScreen from "@/screens/AudioListScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import { createStackNavigator } from "@react-navigation/stack";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { MaterialIcons } from "@expo/vector-icons";
 import FavoritesScreen from "@/screens/FavoritesScreen";
@@ -70,155 +70,142 @@ function PlaylistsStack() {
   );
 }
 import * as MediaLibrary from "expo-media-library";
+
 function App() {
-  const { currentAudio, isPlaying } = useAudioStore();
-  const route = useRoute();
-  const [artists, setArtists] = useState<{ name: string }[]>([]);
-  const [albums, setAlbums]=useState<{name: string; songs: MediaLibrary.Asset[]; picture: picture | null}[]>([])
-  type picture={
-    name:string;
-    pictureData: string;
-  }
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadArtists = async () => {
-      try {
-        const data = await fetchArtists();
-        setArtists(data);
-      } catch (error) {
-        console.error("Erreur lors du chargement des artistes :", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadArtists();
-  }, []);
-
-  useEffect(() => {
-    const loadAlbums = async () => {
-      try {
-        const data = await fetchAlbums();
-        setAlbums(data);
-      } catch (error) {
-        console.error("Erreur lors du chargement des albums :", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAlbums();
-  }, []);
- const { playNextAudio, playPreviousAudio, playPauseAudio } = useAudioStore();
-  useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const action = response.actionIdentifier;
-
-      console.log("Action reçue :", action);
-
-      if (action === "previous") {
-        playPreviousAudio();
-      } else if (action === "play_pause" && currentAudio) {
-        playPauseAudio(currentAudio);
-      } else if (action === "next") {
-        playNextAudio();
-      }
-    });
-
-    return () => subscription.remove();
-  }, [playNextAudio, playPreviousAudio, playPauseAudio, currentAudio]);
-
-  useEffect(() => {
-    const configureNotifications = async () => {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission refusée", "Les notifications ne fonctionneront pas.");
-        return;
-      }
-      await Notifications.dismissAllNotificationsAsync();
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Lecture en cours 🎵",
-          body: currentAudio ? `Titre: ${currentAudio.filename}` : "Aucune musique en cours",
-          categoryIdentifier: 'musicControls',
-        },
-        trigger: null,
+    const { currentAudio, isPlaying, playNextAudio, playPreviousAudio, playPauseAudio } = useAudioStore();
+    const [artists, setArtists] = useState<{ name: string }[]>([]);
+    const [albums, setAlbums] = useState<{ name: string; songs: Asset[]; picture: { name: string; pictureData: string } | null }[]>([]);
+    const [loading, setLoading] = useState(true);
+  
+    const memoizedAlbums = useMemo(() => albums, [albums]);
+    const memoizedArtists = useMemo(() => artists, [artists]);
+  
+    useEffect(() => {
+      const loadData = async () => {
+        try {
+          setLoading(true);
+          const [artistsData, albumsData] = await Promise.all([fetchArtists(), fetchAlbums()]);
+          setArtists(artistsData);
+          setAlbums(albumsData);
+        } catch (error) {
+          console.error("Erreur lors du chargement des données :", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      loadData();
+    }, []);
+  
+    useEffect(() => {
+      const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        const action = response.actionIdentifier;
+  
+        if (action === "previous") {
+          playPreviousAudio();
+        } else if (action === "play_pause" && currentAudio) {
+          playPauseAudio(currentAudio);
+        } else if (action === "next") {
+          playNextAudio();
+        }
       });
-      await Notifications.setNotificationCategoryAsync('musicControls', [
-        {
-          identifier: 'previous',
-          buttonTitle: 'Previous',
-          options: {
-            opensAppToForeground: false,
+  
+      return () => subscription.remove();
+    }, [playNextAudio, playPreviousAudio, playPauseAudio, currentAudio]);
+  
+    useEffect(() => {
+      const configureNotifications = async () => {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission refusée", "Les notifications ne fonctionneront pas.");
+          return;
+        }
+        await Notifications.dismissAllNotificationsAsync();
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Lecture en cours 🎵",
+            body: currentAudio ? `Titre: ${currentAudio.filename}` : "Aucune musique en cours",
+            categoryIdentifier: 'musicControls',
           },
-        },
-        {
-          identifier: 'play_pause',
-          buttonTitle: isPlaying ? 'Pause' : 'Play', 
-          options: {
-            opensAppToForeground: false,
+          trigger: null,
+        });
+        await Notifications.setNotificationCategoryAsync('musicControls', [
+          {
+            identifier: 'previous',
+            buttonTitle: 'Previous',
+            options: {
+              opensAppToForeground: false,
+            },
           },
-        },
-        {
-          identifier: 'next',
-          buttonTitle: 'Next', 
-          options: {
-            opensAppToForeground: false,
+          {
+            identifier: 'play_pause',
+            buttonTitle: isPlaying ? 'Pause' : 'Play', 
+            options: {
+              opensAppToForeground: false,
+            },
           },
-        },
-      ]);
-    };
-
-    if (isPlaying) {
-      configureNotifications();
-    }
-  }, [isPlaying, currentAudio]);
-  useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-    setTimeout(() => {
-      SplashScreen.hideAsync();
-    }, 2000);
-  }, []);
-
-  return (
-    <Drawer.Navigator
-      screenOptions={({ navigation }) => ({
-        headerStyle: { backgroundColor: "#060719", elevation: 0, shadowOpacity: 0 },
-        headerTintColor: "#fff",
-        headerTitleStyle: { fontWeight: "bold" },
-        drawerStyle: { backgroundColor: "#060719", width: 240 },
-        drawerLabelStyle: { color: "#fff" },
-        drawerActiveBackgroundColor: "rgba(255,255,255,0.1)",
-        drawerActiveTintColor: "#fff",
-        drawerInactiveTintColor: "rgba(255,255,255,0.7)",
-      })}
-    >
-      <Drawer.Screen name="Bibliothèque" component={MainStack} options={{
-        drawerIcon: ({ color }) => <MaterialIcons name="library-music" size={24} color={color} />, headerShown: true }}
-      />
-      <Drawer.Screen name="Favoris" component={FavoritesScreen} options={{
-        drawerIcon: ({ color }) => <MaterialIcons name="favorite" size={24} color={color} /> }}
-      />
-      <Drawer.Screen name="Recherche" component={SearchScreen} options={{
-        drawerIcon: ({ color }) => <MaterialIcons name="search" size={24} color={color} /> }}
-      />
-      <Drawer.Screen name="Albums"  options={{
-        drawerIcon: ({ color }) => <MaterialIcons name="album" size={24} color={color} /> }}
+          {
+            identifier: 'next',
+            buttonTitle: 'Next', 
+            options: {
+              opensAppToForeground: false,
+            },
+          },
+        ]);
+      };
+  
+      if (isPlaying) {
+        configureNotifications();
+      }
+    }, [isPlaying, currentAudio]);
+  
+    useEffect(() => {
+      SplashScreen.preventAutoHideAsync();
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 2000);
+    }, []);
+  
+    return (
+      <Drawer.Navigator
+        screenOptions={({ navigation }) => ({
+          headerStyle: { backgroundColor: "#060719", elevation: 0, shadowOpacity: 0 },
+          headerTintColor: "#fff",
+          headerTitleStyle: { fontWeight: "bold" },
+          drawerStyle: { backgroundColor: "#060719", width: 240 },
+          drawerLabelStyle: { color: "#fff" },
+          drawerActiveBackgroundColor: "rgba(255,255,255,0.1)",
+          drawerActiveTintColor: "#fff",
+          drawerInactiveTintColor: "rgba(255,255,255,0.7)",
+        })}
       >
-        {() => <AlbumsScreen albums={albums} loading={loading} />}
-      </Drawer.Screen>
-      <Drawer.Screen
-        name="Artistes"
-        options={{
-          drawerIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
-        }}
-      >
-        {() => <ArtistsScreen artists={artists} loading={loading} />}
-      </Drawer.Screen>
-      <Drawer.Screen name="Playlist" component={PlaylistsStack} options={{
-        drawerIcon: ({ color }) => <MaterialIcons name="queue-music" size={24} color={color} /> }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-export default App;
+        <Drawer.Screen name="Bibliothèque" component={MainStack} options={{
+          drawerIcon: ({ color }) => <MaterialIcons name="library-music" size={24} color={color} />, headerShown: true }}
+        />
+        <Drawer.Screen name="Favoris" component={FavoritesScreen} options={{
+          drawerIcon: ({ color }) => <MaterialIcons name="favorite" size={24} color={color} /> }}
+        />
+        <Drawer.Screen name="Recherche" component={SearchScreen} options={{
+          drawerIcon: ({ color }) => <MaterialIcons name="search" size={24} color={color} /> }}
+        />
+        <Drawer.Screen name="Albums"  options={{
+          drawerIcon: ({ color }) => <MaterialIcons name="album" size={24} color={color} /> }}
+        >
+          {() => <AlbumsScreen albums={memoizedAlbums} loading={loading} />}
+        </Drawer.Screen>
+        <Drawer.Screen
+          name="Artistes"
+          options={{
+            drawerIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
+          }}
+        >
+          {() => <ArtistsScreen artists={memoizedArtists} loading={loading} />}
+        </Drawer.Screen>
+        <Drawer.Screen name="Playlist" component={PlaylistsStack} options={{
+          drawerIcon: ({ color }) => <MaterialIcons name="queue-music" size={24} color={color} /> }}
+        />
+      </Drawer.Navigator>
+    );
+  }
+  
+  export default App;

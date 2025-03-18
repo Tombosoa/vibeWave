@@ -1,155 +1,126 @@
 import * as MediaLibrary from "expo-media-library";
 import MusicInfo from "expo-music-info-2";
-import MusicFiles from "react-native-get-music-files";
+import pLimit from "p-limit";
+
+const metadataCache = new Map<string, any>();
+
+const limit = pLimit(10);
 
 export const fetchAudioFiles = async (): Promise<MediaLibrary.Asset[]> => {
-  const { status } = await MediaLibrary.requestPermissionsAsync();
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      throw new Error("Permission non accordée pour accéder à la bibliothèque musicale.");
+    }
 
-  if (status !== "granted") {
-    throw new Error(
-      "Permission non accordée pour accéder à la bibliothèque musicale.",
-    );
+    let allAudioFiles: MediaLibrary.Asset[] = [];
+    let hasNextPage = true;
+    let after: string | null = null;
+
+    while (hasNextPage) {
+      const media = await MediaLibrary.getAssetsAsync({
+        mediaType: MediaLibrary.MediaType.audio,
+        first: 100, 
+        after: after || undefined,
+      });
+
+      allAudioFiles.push(...media.assets);
+      hasNextPage = media.hasNextPage;
+      after = media.endCursor;
+    }
+
+    return allAudioFiles;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des fichiers audio :", error);
+    throw error;
   }
-
-  let allAudioFiles: MediaLibrary.Asset[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    const media = await MediaLibrary.getAssetsAsync({
-      mediaType: MediaLibrary.MediaType.audio,
-      first: 1,
-      after: after || undefined,
-    });
-
-    allAudioFiles = [...allAudioFiles, ...media.assets];
-    hasNextPage = media.hasNextPage;
-    after = media.endCursor;
-  }
-
-  return allAudioFiles;
 };
 
-export async function fetchMetadata(uri:string){
-   let data = await (MusicInfo as any).getMusicInfoAsync(uri, {
+export const fetchMetadata = async (uri: string) => {
+  if (metadataCache.has(uri)) {
+    return metadataCache.get(uri);
+  }
+
+  try {
+    const metadata = await (MusicInfo as any).getMusicInfoAsync(uri, {
       title: true,
       artist: true,
       album: true,
       genre: true,
-      picture: true, 
+      picture: true,
     });
-
-    return data;
+    metadataCache.set(uri, metadata);
+    return metadata;
+  } catch (error) {
+    console.warn(`Erreur lors de la récupération des métadonnées pour ${uri}:`, error);
+    return null;
+  }
 };
+
+const groupByKey = (
+  data: MediaLibrary.Asset[],
+  metadataResults: PromiseSettledResult<any>[],
+  key: "artist" | "album"
+) => {
+  const map = new Map<string, { songs: MediaLibrary.Asset[]; picture: Picture | null }>();
+
+  metadataResults.forEach((result, index) => {
+    const value = result.status === "fulfilled" && result.value ? result.value[key]?.trim() : null;
+    const name = value || `${key === "artist" ? "Artiste" : "Album"} inconnu`;
+    const picture = result.status === "fulfilled" && result.value ? result.value.picture || null : null;
+
+    if (!map.has(name)) {
+      map.set(name, { songs: [], picture });
+    }
+    map.get(name)!.songs.push(data[index]);
+  });
+
+  return map;
+};
+
+interface Picture {
+  name: string;
+  pictureData: string;
+}
 
 interface Artist {
   name: string;
   songs: MediaLibrary.Asset[];
 }
 
-export const fetchArtists = async (): Promise<{ name: string; songs: MediaLibrary.Asset[] }[]> => {
-  const { status } = await MediaLibrary.requestPermissionsAsync();
-
-  if (status !== "granted") {
-    throw new Error("Permission non accordée pour accéder à la bibliothèque musicale.");
-  }
-
-  let allAudioFiles: MediaLibrary.Asset[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    const media = await MediaLibrary.getAssetsAsync({
-      mediaType: MediaLibrary.MediaType.audio,
-      first: 100,
-      after: after || undefined,
-    });
-
-    allAudioFiles = [...allAudioFiles, ...media.assets];
-    hasNextPage = media.hasNextPage;
-    after = media.endCursor;
-  }
-
-  if (allAudioFiles.length === 0) return [];
-
-  // Récupération des métadonnées en parallèle
-  const metadataResults = await Promise.allSettled(allAudioFiles.map((file) => fetchMetadata(file.uri)));
-
-  const artistMap: Record<string, MediaLibrary.Asset[]> = {};
-
-  metadataResults.forEach((result, index) => {
-    if (result.status === "fulfilled" && result.value) {
-      const artist = result.value.artist?.trim() || "Artiste inconnu";
-
-      if (!artistMap[artist]) {
-        artistMap[artist] = [];
-      }
-      artistMap[artist].push(allAudioFiles[index]);
-    } else {
-      console.warn(`Impossible de récupérer les métadonnées du fichier : ${allAudioFiles[index].uri}`);
-    }
-  });
-
-  return Object.keys(artistMap).map((name) => ({ name, songs: artistMap[name] }));
-};
-
-
-export const fetchSongsByArtist = async (artistName: string): Promise<MediaLibrary.Asset[]> => {
-  const artists = await fetchArtists();
-  const artist = artists.find((a) => a.name === artistName);
-  return artist ? artist.songs : [];
-};
-type picture={
-  name:string;
-  pictureData: string;
+interface Album {
+  name: string;
+  songs: MediaLibrary.Asset[];
+  picture: Picture | null;
 }
-export const fetchAlbums = async (): Promise<{ name: string; songs: MediaLibrary.Asset[]; picture: picture | null }[]> => {
-  const { status } = await MediaLibrary.requestPermissionsAsync();
-  if (status !== "granted") {
-    throw new Error("Permission non accordée pour accéder à la bibliothèque musicale.");
-  }
 
-  let allAudioFiles: MediaLibrary.Asset[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  // Récupération optimisée des fichiers audio (plus grande pagination)
-  while (hasNextPage) {
-    const media = await MediaLibrary.getAssetsAsync({
-      mediaType: MediaLibrary.MediaType.audio,
-      first: 200, // Augmenté pour limiter les requêtes
-      after: after || undefined,
-    });
-
-    allAudioFiles = allAudioFiles.concat(media.assets);
-    hasNextPage = media.hasNextPage;
-    after = media.endCursor;
-  }
-
+/**
+ * Récupère tous les artistes avec leurs fichiers audio.
+ */
+export const fetchArtists = async (): Promise<Artist[]> => {
+  const allAudioFiles = await fetchAudioFiles();
   if (allAudioFiles.length === 0) return [];
 
-  // Récupérer toutes les métadonnées en parallèle pour accélérer le processus
-  const metadataResults = await Promise.allSettled(allAudioFiles.map(file => fetchMetadata(file.uri)));
+  const metadataResults = await Promise.allSettled(
+    allAudioFiles.map(file => limit(() => fetchMetadata(file.uri)))
+  );
 
-  const albumMap = new Map<string, { songs: MediaLibrary.Asset[]; picture: picture | null }>();
+  const artistMap = groupByKey(allAudioFiles, metadataResults, "artist");
+  return Array.from(artistMap.entries()).map(([name, { songs }]) => ({ name, songs }));
+};
 
-  allAudioFiles.forEach((file, index) => {
-    const result = metadataResults[index];
-    let albumName = "Album inconnu";
-    let albumCover: picture | null = null;
+/**
+ * Récupère tous les albums avec leurs fichiers audio et couvertures.
+ */
+export const fetchAlbums = async (): Promise<Album[]> => {
+  const allAudioFiles = await fetchAudioFiles();
+  if (allAudioFiles.length === 0) return [];
 
-    if (result.status === "fulfilled" && result.value) {
-      albumName = result.value.album || "Album inconnu";
-      albumCover = result.value.picture || null;
-    }
+  const metadataResults = await Promise.allSettled(
+    allAudioFiles.map(file => limit(() => fetchMetadata(file.uri)))
+  );
 
-    if (!albumMap.has(albumName)) {
-      albumMap.set(albumName, { songs: [], picture: albumCover });
-    }
-
-    albumMap.get(albumName)!.songs.push(file);
-  });
-
+  const albumMap = groupByKey(allAudioFiles, metadataResults, "album");
   return Array.from(albumMap.entries()).map(([name, { songs, picture }]) => ({
     name,
     songs,
@@ -157,9 +128,24 @@ export const fetchAlbums = async (): Promise<{ name: string; songs: MediaLibrary
   }));
 };
 
+/**
+ * Récupère les fichiers audio d'un artiste spécifique.
+ */
+export const fetchSongsByArtist = async (
+  artistName: string,
+  artists?: Artist[]
+): Promise<MediaLibrary.Asset[]> => {
+  const artistList = artists || await fetchArtists();
+  return artistList.find((artist) => artist.name === artistName)?.songs || [];
+};
 
-export const fetchSongsByAlbum = async (albumName: string): Promise<MediaLibrary.Asset[]> => {
-  const albums = await fetchAlbums();
-  const album = albums.find((a) => a.name === albumName);
-  return album ? album.songs : [];
+/**
+ * Récupère les fichiers audio d'un album spécifique.
+ */
+export const fetchSongsByAlbum = async (
+  albumName: string,
+  albums?: Album[]
+): Promise<MediaLibrary.Asset[]> => {
+  const albumList = albums || await fetchAlbums();
+  return albumList.find((album) => album.name === albumName)?.songs || [];
 };
