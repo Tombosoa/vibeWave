@@ -4,7 +4,7 @@
     "slug": "vibeWave",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/vwsplash.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,8 +12,13 @@
       "supportsTablet": true
     },
     "android": {
+      "splash": {
+        "image": "./assets/images/vwicon.png",
+        "backgroundColor": "#fffffff",
+        "resizeMode": "contain"
+      },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/vwicon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK"],
@@ -26,17 +31,16 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/vwicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "image": "./assets/images/vwicon.png",
+          "backgroundColor": "#fffffff",
+          "resizeMode": "contain"
         }
       ]
     ],

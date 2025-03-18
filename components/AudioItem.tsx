@@ -43,7 +43,7 @@ const AudioItem: React.FC<AudioItemProps> = ({
     <Animated.View entering={FadeIn}>
       <TouchableOpacity style={audioItemStyles.container} onPress={onPress}>
         <View style={audioItemStyles.iconContainer}>
-          <MaterialIcons name="music-note" size={24} color="#1e3c72" />
+          <MaterialIcons name="music-note" size={24} color="#8ebbff" />
         </View>
         <View style={audioItemStyles.textContainer}>
           <Text style={audioItemStyles.title}>{formatTitle(title)}</Text>
@@ -59,7 +59,7 @@ const AudioItem: React.FC<AudioItemProps> = ({
                 : "play-circle"
             }
             size={40}
-            color="#1e3c72"
+            color="#8ebbff"
           />
         </TouchableOpacity>
       </TouchableOpacity>

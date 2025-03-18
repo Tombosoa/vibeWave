@@ -19,6 +19,19 @@ interface AudioPlayerProps {
   audio: MediaLibrary.Asset;
 }
 
+type Metadata = {
+  title?: string,
+  artist: string,
+  album?: string,
+  genre?: string,
+  picture: picture, 
+}
+
+type picture = {
+  description: string,
+  pictureData: string
+}
+
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
   const {
     currentAudio,
@@ -122,15 +135,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
       }
     }, [sound]);
 
-    const [metadata, setMetadata] = useState<{ picture: string | null }>({
-      picture: null,
-    });
+    const [metadata, setMetadata] = useState<Metadata>();
   
     useEffect(() => {
       const loadMetadata = async () => {
         try{
           const data = await fetchMetadata(audio.uri);
-          setMetadata({ picture: data?.picture });  
+          setMetadata(data);  
         }catch(error){
           console.error(error)
         }
@@ -154,8 +165,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
             },
           ]}
         >
-          {metadata.picture ? (
-        <Image source={{ uri: metadata.picture }} style={styles.cover} />
+          {metadata?.picture ? (
+        <Image source={{ uri: metadata.picture.pictureData }} style={styles.cover} />
       ) : (
         <MaterialIcons name="music-note" size={100} color="#1e3c72" />
       )}

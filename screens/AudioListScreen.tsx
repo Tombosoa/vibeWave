@@ -94,7 +94,7 @@ const AudioListScreen = () => {
 
   const renderHeader = () => (
     <LinearGradient
-      colors={['#1e3c72', '#2a5298']}
+      colors={['#060719', '#0f113a']}
       style={styles.headerGradient}
     >
       <Animated.View 
@@ -176,7 +176,7 @@ const AudioListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa", // Fond clair et doux
+    backgroundColor: "#f8f9fa", 
   },
   headerGradient: {
     paddingTop: 60,
@@ -198,13 +198,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Ombre douce pour le texte
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', 
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.9)", // Texte légèrement plus visible
+    color: "rgba(255,255,255,0.9)", 
     marginTop: 5,
   },
   content: {
@@ -233,11 +233,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    backgroundColor: '#ffffff', // Fond blanc pour le footer
+    backgroundColor: '#ffffff', 
   },
   currentAudioTitle: {
     fontSize: 16,
-    color: "#333", // Texte sombre pour contraster avec le fond clair
+    color: "#333", 
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 5,

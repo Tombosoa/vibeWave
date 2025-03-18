@@ -27,7 +27,7 @@ export const audioItemStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#060719",
     padding: 15,
     borderRadius: 12,
     marginVertical: 6,
@@ -53,7 +53,7 @@ export const audioItemStyles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2d3436",
+    color: "#ffffff",
     marginBottom: 4,
   },
   duration: {
