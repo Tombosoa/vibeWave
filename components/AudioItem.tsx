@@ -1,9 +1,8 @@
-import React from "react";
-import { TouchableOpacity, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { TouchableOpacity, Text, View ,StyleSheet} from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { audioItemStyles } from "@/styles/style";
-//import { AudioItemProps } from '@/utils';
 import * as MediaLibrary from "expo-media-library";
 
 import { useAudioStore } from "@/store/audioStore";
@@ -39,8 +38,7 @@ const AudioItem: React.FC<AudioItemProps> = ({
         .slice(0, 40) + (title.length > 40 ? "..." : "")
     );
   };
-//console.log(audio.albumId)
-//console.log(audio.mediaSubtypes)
+
   return (
     <Animated.View entering={FadeIn}>
       <TouchableOpacity style={audioItemStyles.container} onPress={onPress}>
@@ -68,5 +66,72 @@ const AudioItem: React.FC<AudioItemProps> = ({
     </Animated.View>
   );
 };
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 20,
+    justifyContent: 'flex-end',
+    borderRadius: 20,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  cover: {
+    width: 150, 
+    height: 150, 
+    borderRadius: 10, 
+    marginBottom: 10
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1e3c72",
+    textAlign: "center",
+  },
+  artist: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+    marginTop: 5,
+  },
+  slider: {
+    width: 'auto',
+    height: 40,
+    marginBottom: 10,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+  },
+  timeText: {
+    fontSize: 14,
+    color: "#1e3c72",
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  controls: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    width: "100%",
+  },
+  controlButton: {
+    padding: 10,
+  },
+  playButton: {
+    padding: 10,
+    transform: [{ scale: 1.2 }],
+  },
+});
 export default AudioItem;

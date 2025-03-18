@@ -4,16 +4,14 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  Animated,
+  Animated, Image
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as MediaLibrary from "expo-media-library";
 import { useAudioStore } from "@/store/audioStore";
 import Slider from "@react-native-community/slider";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
-
-const { width } = Dimensions.get("window");
+import { fetchMetadata } from "@/scripts/audioService";
 
 interface AudioPlayerProps {
   title: string;
@@ -92,13 +90,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
       }
     }, [sound]);
 
- /* const handleSliderValueChange = (value: number) => {
-    if (sound) {
-      sound.setPositionAsync(value);
-      setPosition(value);
-    }
-  };*/
-
   const translateX = useRef(new Animated.Value(0)).current;
 
   const onGestureEvent = Animated.event(
@@ -131,6 +122,24 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
       }
     }, [sound]);
 
+    const [metadata, setMetadata] = useState<{ picture: string | null }>({
+      picture: null,
+    });
+  
+    useEffect(() => {
+      const loadMetadata = async () => {
+        try{
+          const data = await fetchMetadata(audio.uri);
+          setMetadata({ picture: data?.picture });  
+        }catch(error){
+          console.error(error)
+        }
+        
+      };
+  
+      loadMetadata();
+    }, [audio]);
+
   return (
     <PanGestureHandler
       onGestureEvent={onGestureEvent}
@@ -145,7 +154,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ title, artist, audio }) => {
             },
           ]}
         >
-          <MaterialIcons name="music-note" size={50} color="#1e3c72" />
+          {metadata.picture ? (
+        <Image source={{ uri: metadata.picture }} style={styles.cover} />
+      ) : (
+        <MaterialIcons name="music-note" size={100} color="#1e3c72" />
+      )}
+
         </Animated.View>
 
         <Animated.View
@@ -221,6 +235,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  cover: {
+    width: 150, 
+    height: 150, 
+    borderRadius: 10, 
+    marginBottom: 10
   },
   header: {
     alignItems: "center",

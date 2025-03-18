@@ -6,7 +6,6 @@ import {
   SafeAreaView, 
   ActivityIndicator, 
   RefreshControl, 
-  TouchableOpacity,
   Dimensions,
   StyleSheet
 } from "react-native";
@@ -25,6 +24,7 @@ import Animated, {
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/app";
 import Player from "@/components/Player";
+import { fetchMetadata } from "../scripts/audioService";
 
 const { width } = Dimensions.get('window');
 
@@ -47,6 +47,7 @@ const AudioListScreen = () => {
 
   useEffect(() => {
     loadAudioFiles();
+    
   }, []);
 
   const loadAudioFiles = async () => {
@@ -68,6 +69,22 @@ const AudioListScreen = () => {
       throw new Error("Function not implemented.");
     } } audio={currentAudio}/>
   }
+
+  useEffect(() => {
+    const fetchAndLogMetadata = async () => {
+//      const urii = "file:///storage/emulated/0/Download/Bruno_Mars_-_When_I_Was_Your_Man_Naijamusics.com.mp3";
+      try {
+        if(currentAudio?.uri){
+          const metadata = await fetchMetadata(currentAudio?.uri);
+        console.log('Metadata:', metadata);
+        }
+      } catch (error) {
+        console.error('Error fetching metadata:', error);
+      }
+    };
+
+    fetchAndLogMetadata();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -156,11 +173,10 @@ const AudioListScreen = () => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f6fa",
+    backgroundColor: "#f8f9fa", // Fond clair et doux
   },
   headerGradient: {
     paddingTop: 60,
@@ -169,9 +185,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   headerContent: {
     alignItems: 'center',
@@ -182,10 +198,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Ombre douce pour le texte
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.9)", // Texte légèrement plus visible
     marginTop: 5,
   },
   content: {
@@ -210,10 +229,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 20,
     elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    backgroundColor: '#ffffff', // Fond blanc pour le footer
   },
   currentAudioTitle: {
     fontSize: 16,
-    color: "#fff",
+    color: "#333", // Texte sombre pour contraster avec le fond clair
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 5,
@@ -246,7 +270,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#1e3c72",
+    color: "#4a5568", // Gris foncé pour le texte de chargement
     textAlign: "center",
   },
   emptyContainer: {
@@ -258,31 +282,29 @@ const styles = StyleSheet.create({
   emptyMessage: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#1e3c72",
+    color: "#4a5568", // Gris foncé pour le texte
     marginTop: 20,
     textAlign: "center",
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#1e3c72",
+    color: "#4a5568", 
     marginTop: 20,
     textAlign: "center",
   },
   emptySubTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1e3c72",
-    marginTop: 20,
+    fontSize: 16,
+    color: "#718096", 
+    marginTop: 10,
     textAlign: "center",
   },
   emptySubMessage: {
     fontSize: 16,
-    color: "#666",
+    color: "#718096", 
     marginTop: 10,
     textAlign: "center",
     maxWidth: width * 0.8,
   },
 });
-
 export default AudioListScreen;

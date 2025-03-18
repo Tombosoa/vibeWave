@@ -6,30 +6,25 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
+  Image
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  interpolate,
-  Extrapolate,
-  withSpring,
 } from "react-native-reanimated";
 import { useAudioStore } from "@/store/audioStore";
 import * as MediaLibrary from "expo-media-library";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react-native";
 import Slider from "@react-native-community/slider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-//import MusicInfo from "expo-music-info";
-import TrackPlayer from "react-native-track-player"
-import * as Metadata from "react-native-music-metadata";
 
 interface PlayerProps {
   current: MediaLibrary.Asset;
   onPress: () => void;
   audio: MediaLibrary.Asset;
 }
-const { width, height } = Dimensions.get("window");
+
 const Player: React.FC<PlayerProps> = ({ current, onPress, audio }) => {
   const insets = useSafeAreaInsets();
   const {
@@ -42,7 +37,6 @@ const Player: React.FC<PlayerProps> = ({ current, onPress, audio }) => {
   
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-
 
   const formatTime = useCallback((millis: number) => {
     const totalSeconds = Math.floor(millis / 1000);
@@ -82,65 +76,12 @@ const Player: React.FC<PlayerProps> = ({ current, onPress, audio }) => {
     }
   }, [sound]);
   const translateY = useSharedValue(0);
-  const playerHeight = 180;
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: translateY.value }],
     };
   });
-//console.log(current.uri)
-/*
-const [metadata, setMetadata] = useState({
-  title: "Inconnu",
-  artist: "Inconnu",
-  album: "Inconnu",
-  genre: "Inconnu",
-  picture: null,
-});
- async function fetchMetadata(uri: string) {
-  try {
-    let data;
-    
-    if ((MusicInfo as any).getMusicInfoAsync) {
-      data = await (MusicInfo as any).getMusicInfoAsync(uri, {
-        title: true,
-        artist: true,
-        album: true,
-        genre: true,
-        picture: true,
-      });
-    } 
-
-    setMetadata(data);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des métadonnées :", error);
-  }
-}
-
-useEffect(() => {
-  if (current?.uri) {
-    fetchMetadata(current.uri);
-    //console.log(metadata)
-  }
-}, [current]);*/
-
-  //console.log(getMetadata())
-  console.log(current.uri)
-
-  const onGestureEvent = (event: { translationY: number; }) => {
-    translateY.value = event.translationY;
-    console.log("touched")
-  };
-
-  const onGestureEnd = () => {
-    if (translateY.value > 50) {
-      translateY.value = withSpring(height, { damping: 20, stiffness: 100 });
-    } else {
-      translateY.value = withSpring(0, { damping: 20, stiffness: 100 });
-    }
-  };
-
 
   return (
 
@@ -158,7 +99,7 @@ useEffect(() => {
           <Text numberOfLines={1} style={styles.currentAudioTitle}>
             {current.filename}
           </Text>
-
+          
           <Slider
             style={styles.slider}
             minimumValue={0}
@@ -216,6 +157,9 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.select({ ios: 20, android: 20, default: 20 }),
     marginBottom: 10,
     zIndex: 1
+  },
+  img: {
+    width: 100
   },
   footerGradient: {
     flexDirection: "column",
